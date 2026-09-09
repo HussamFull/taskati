@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:taskati/app_string.dart';
+import 'package:taskati/models/task_model.dart';
 import 'package:taskati/widgets/custom_add_task_felid.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -9,32 +12,59 @@ class AddTaskScreen extends StatefulWidget {
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-  TextEditingController dateController = TextEditingController();
-  TextEditingController startTimeController = TextEditingController();
-  TextEditingController endTimeController = TextEditingController();
+  final List<Color> colors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+  ];
+
+  int activeSelectedIndex = -1;
+
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController dateController = TextEditingController();
+  final TextEditingController startTimeController = TextEditingController();
+  final TextEditingController endTimeController = TextEditingController();
+
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+    dateController.dispose();
+    startTimeController.dispose();
+    endTimeController.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Color(0xff4e5ae8)),
-        titleTextStyle: TextStyle(
-          color: Color(0xff4e5ae8),
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+        iconTheme: const IconThemeData(color: Color(0xff4e5ae8)),
+        title: const Text(
+          'Add Task',
+          style: TextStyle(
+            color: Color(0xff4e5ae8),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        title: Text('Add Task'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Form(
+          key: formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Title',
                 style: TextStyle(
                   color: Colors.black,
@@ -42,19 +72,25 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
+              const SizedBox(height: 10),
+
               CustomAddTaskField(
                 hintText: 'Enter task title',
-                readOnly: false,
                 controller: titleController,
+                readOnly: false,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please enter a title';
                   }
+
+                  return null;
                 },
               ),
-              SizedBox(height: 10.0),
 
-              Text(
+              const SizedBox(height: 20),
+
+              const Text(
                 'Description',
                 style: TextStyle(
                   color: Colors.black,
@@ -62,20 +98,26 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
+              const SizedBox(height: 10),
+
               CustomAddTaskField(
                 hintText: 'Enter task description',
-
                 controller: descriptionController,
                 maxLine: 3,
                 readOnly: false,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please enter a description';
                   }
+
+                  return null;
                 },
               ),
-              SizedBox(height: 10.0),
-              Text(
+
+              const SizedBox(height: 20),
+
+              const Text(
                 'Date',
                 style: TextStyle(
                   color: Colors.black,
@@ -83,138 +125,245 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
+              const SizedBox(height: 10),
+
               CustomAddTaskField(
                 hintText: '2026-01-01',
+                controller: dateController,
+                readOnly: true,
                 suffixIcon: InkWell(
-                  child: Icon(Icons.date_range),
-                  onTap: () {
-                    showDatePicker(
+                  onTap: () async {
+                    final selectedDate = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                      barrierDismissible: false, // Prevents closing the date picker by tapping outside
-                    ).then((selectedDate) {
-                      if (selectedDate != null) {
-                        // Update the text field with the selected date
-                        setState(() {
-                          // Format the date as needed
-                          String formattedDate =
-                              "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
-                          // Update the controller's text
-                          dateController.text = formattedDate;
-                          // 22,12 min vin vedio
-                        });
-                      }
-                    });
+                    );
+
+                    if (selectedDate != null) {
+                      final formattedDate =
+                          '${selectedDate.year}-'
+                          '${selectedDate.month.toString().padLeft(2, '0')}-'
+                          '${selectedDate.day.toString().padLeft(2, '0')}';
+
+                      dateController.text = formattedDate;
+                    }
                   },
+                  child: const Icon(Icons.date_range),
                 ),
-                readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please select a date';
                   }
+
+                  return null;
                 },
               ),
 
-              SizedBox(height: 10.0),
+              const SizedBox(height: 20),
 
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Start Time",
+                        const Text(
+                          'Start Time',
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 10.0),
+
+                        const SizedBox(height: 10),
+
                         CustomAddTaskField(
                           hintText: '10:00 AM',
+                          controller: startTimeController,
                           readOnly: true,
                           suffixIcon: InkWell(
-                            child: Icon(Icons.alarm),
-                            onTap: () {
-                              showTimePicker(
+                            onTap: () async {
+                              final selectedTime = await showTimePicker(
                                 context: context,
                                 initialTime: TimeOfDay.now(),
-                              ).then((selectedTime) {
-                                if (selectedTime != null) {
-                                  // Update the text field with the selected time
-                                  setState(() {
-                                    String formattedTime = selectedTime.format(
-                                      context,
-                                    );
-                                    // Update the controller's text
-                                    startTimeController.text = formattedTime;
-                                    // 28 min vin vedio
-                                  });
-                                }
-                              });
+                              );
+
+                              if (selectedTime != null) {
+                                startTimeController.text = selectedTime.format(
+                                  context,
+                                );
+                              }
                             },
+                            child: const Icon(Icons.alarm),
                           ),
-                          controller: startTimeController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please select a start time';
                             }
+
+                            return null;
                           },
                         ),
                       ],
                     ),
                   ),
 
+                  const SizedBox(width: 12),
+
                   Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "End Time",
+                        const Text(
+                          'End Time',
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 10.0),
+
+                        const SizedBox(height: 10),
+
                         CustomAddTaskField(
                           hintText: '10:00 PM',
+                          controller: endTimeController,
                           readOnly: true,
                           suffixIcon: InkWell(
-                            child: Icon(Icons.alarm),
-                            onTap: () {
-                              showTimePicker(
+                            onTap: () async {
+                              final selectedTime = await showTimePicker(
                                 context: context,
                                 initialTime: TimeOfDay.now(),
-                              ).then((selectedTime) {
-                                if (selectedTime != null) {
-                                  // Update the text field with the selected time
-                                  setState(() {
-                                    String formattedTime = selectedTime.format(
-                                      context,
-                                    );
-                                    // Update the controller's text
-                                    endTimeController.text = formattedTime;
-                                    // 28 min vin vedio
-                                  });
-                                }
-                              });
+                              );
+
+                              if (selectedTime != null) {
+                                endTimeController.text = selectedTime.format(
+                                  context,
+                                );
+                              }
                             },
+                            child: const Icon(Icons.alarm),
                           ),
-                          controller: endTimeController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please select an End time';
+                              return 'Please select an end time';
                             }
+
+                            return null;
                           },
                         ),
                       ],
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 30),
+
+              const Text(
+                'Color',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: List.generate(colors.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          activeSelectedIndex = index;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(25),
+                      child: CircleAvatar(
+                        radius: 25,
+                        backgroundColor: colors[index],
+                        child: activeSelectedIndex == index
+                            ? const Icon(Icons.check, color: Colors.white)
+                            : null,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    // Validate the form
+                    if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+
+                    // Validate color selection
+                    if (activeSelectedIndex == -1) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Error'),
+                            content: const Text('Please choose a color.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      return;
+                    }
+
+                    // Create task
+                    final task = TaskModel(
+                      taskTitle: titleController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      date: dateController.text,
+                      startTime: startTimeController.text,
+                      endTime: endTimeController.text,
+                      color: colors[activeSelectedIndex].toARGB32(),
+                      status: 'TODO',
+                    );
+
+                    // Save task to Hive
+                    await Hive.box<TaskModel>(AppString.taskBox).add(task);
+
+                    // Return to previous screen
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff4e5ae8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.all(12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Create Task',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
               ),
             ],
           ),
