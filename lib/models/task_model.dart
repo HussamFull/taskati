@@ -3,7 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 part 'task_model.g.dart';
 @HiveType(typeId: 1)
 
-class TaskModel {
+class TaskModel extends HiveObject {
    TaskModel({
     required this.taskTitle,
     required this.description,
