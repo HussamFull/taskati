@@ -5,10 +5,13 @@ import 'package:taskati/app_string.dart';
 import 'package:taskati/models/task_model.dart';
 import 'package:taskati/models/user_model.dart';
 import 'package:taskati/screens/add_task_screen.dart';
+import 'package:taskati/taskati.dart';
 import 'package:taskati/widgets/date_addtask.dart';
 import 'package:taskati/widgets/date_container.dart';
 import 'package:taskati/widgets/home_app_bar.dart';
 import 'package:taskati/widgets/task_item.dart';
+
+//import 'package:taskati/taskati.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,17 +21,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Box<TaskModel> myBox =
-      Hive.box<TaskModel>(AppString.taskBox);
+  final Box<TaskModel> myBox = Hive.box<TaskModel>(AppString.taskBox);
 
-  UserModel? user =
-      Hive.box<UserModel>(AppString.userBox).getAt(0);
+  UserModel? user = Hive.box<UserModel>(AppString.userBox).getAt(0);
 
-  final List<String> statusList = [
-    "All",
-    "Complete",
-    "TODO",
-  ];
+  final List<String> statusList = ["All", "Complete", "TODO"];
 
   int selectedIndex = 0;
 
@@ -50,13 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (selectedIndex == 0) {
       tasks = List<TaskModel>.from(allTasks);
     } else if (selectedIndex == 1) {
-      tasks = allTasks
-          .where((task) => task.status == "Complete")
-          .toList();
+      tasks = allTasks.where((task) => task.status == "Complete").toList();
     } else {
-      tasks = allTasks
-          .where((task) => task.status == "TODO")
-          .toList();
+      tasks = allTasks.where((task) => task.status == "TODO").toList();
     }
   }
 
@@ -68,9 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // IMPORTANT:
     // Remove immediately from the displayed list.
     setState(() {
-      tasks.removeWhere(
-        (item) => item.key == task.key,
-      );
+      tasks.removeWhere((item) => item.key == task.key);
     });
 
     // Then remove it from Hive.
@@ -91,9 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Remove it immediately from the current displayed list
     // if the current filter should no longer contain it.
     setState(() {
-      tasks.removeWhere(
-        (item) => item.key == task.key,
-      );
+      tasks.removeWhere((item) => item.key == task.key);
     });
   }
 
@@ -115,7 +104,24 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(
+        actions: [
+          IconButton(
+
+            onPressed: () {
+             themeNotifier.value = themeNotifier.value==ThemeMode.light ? ThemeMode.dark:ThemeMode.light;
+              
+            },
+
+            icon: Icon(
+              themeNotifier.value == ThemeMode.light
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       body: SafeArea(
         child: Padding(
@@ -123,28 +129,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
           child: ListView(
             children: [
-
               // ------------------------------------------------
               // App Bar
               // ------------------------------------------------
 
-              HomeAppBar(
-                user: user,
-              ),
+              HomeAppBar(user: user),
 
               const SizedBox(height: 20),
 
               // ------------------------------------------------
               // Add Task
               // ------------------------------------------------
-
               DateAndAddTask(
                 onPressed: () async {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const AddTaskScreen(),
+                      builder: (context) => const AddTaskScreen(),
                     ),
                   );
 
@@ -161,23 +162,18 @@ class _HomeScreenState extends State<HomeScreen> {
               // ------------------------------------------------
               // Status Buttons
               // ------------------------------------------------
-
               Row(
-                children: List.generate(
-                  statusList.length,
-                  (index) {
-                    return DateContainer(
-                      statusText: statusList[index],
+                children: List.generate(statusList.length, (index) {
+                  return DateContainer(
+                    statusText: statusList[index],
 
-                      isActive:
-                          index == selectedIndex,
+                    isActive: index == selectedIndex,
 
-                      onTap: () {
-                        changeStatus(index);
-                      },
-                    );
-                  },
-                ),
+                    onTap: () {
+                      changeStatus(index);
+                    },
+                  );
+                }),
               ),
 
               const SizedBox(height: 20),
@@ -185,30 +181,20 @@ class _HomeScreenState extends State<HomeScreen> {
               // ------------------------------------------------
               // Empty / Tasks
               // ------------------------------------------------
-
               if (tasks.isEmpty)
-
-                Lottie.asset(
-                  "assets/images/Empty_box.json",
-                )
-
+                Lottie.asset("assets/images/Empty_box.json")
               else
-
                 ListView.separated(
                   shrinkWrap: true,
 
-                  physics:
-                      const NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
 
                   itemCount: tasks.length,
 
-                  separatorBuilder:
-                      (context, index) =>
-                          const SizedBox(height: 10),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
 
-                  itemBuilder:
-                      (context, index) {
-
+                  itemBuilder: (context, index) {
                     final task = tasks[index];
 
                     return TaskItem(
@@ -216,19 +202,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       task: task,
 
-                      onDismissed:
-                          (direction) {
-
-                        if (direction ==
-                            DismissDirection.startToEnd) {
-
-                           // Green → Complete
-    updateTaskStatus(task);
-
+                      onDismissed: (direction) {
+                        if (direction == DismissDirection.startToEnd) {
+                          // Green → Complete
+                          updateTaskStatus(task);
                         } else {
-
-                            // Red → Delete
-    deleteTask(task);
+                          // Red → Delete
+                          deleteTask(task);
                         }
                       },
                     );
@@ -241,3 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
+// وصلنا للمحاضرة 11 الساعة 16 د 

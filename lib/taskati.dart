@@ -1,14 +1,46 @@
 import 'package:flutter/material.dart';
+
 import 'screens/splash_screen.dart';
 
+  ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
+
 class Taskati extends StatelessWidget {
-  const Taskati({super.key});
+   Taskati({super.key});
+
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false, // يفضل إضافتها لإخفاء علامة الـ Debug
-      home: SplashScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+
+      builder: (context, themeMode, child) {
+        return MaterialApp(
+          
+          debugShowCheckedModeBanner: false,
+
+          themeMode: themeMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: Colors.white
+
+           ),
+           darkTheme:ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: Colors.black
+
+           ),
+
+           
+
+            home: SplashScreen(),
+        
+        
+        
+        );
+      },
     );
+
+   
   }
 }

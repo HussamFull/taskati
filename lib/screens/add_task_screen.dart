@@ -44,7 +44,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:  Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Color(0xff4e5ae8)),
         title: const Text(
