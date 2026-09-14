@@ -103,6 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+
+
+    
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -158,6 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 20),
+
+               
 
               // ------------------------------------------------
               // Status Buttons
